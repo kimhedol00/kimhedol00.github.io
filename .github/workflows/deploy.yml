@@ -1,61 +1,60 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages # workflow의 이름을 설정
 
-on:
-  push:
-    branches: [main]
+on: # workflow가 어떤 이벤트에 반응할지 정의
+  push: # 'push'
+    branches: [main] # 'main' 브랜치에 push가 발생했을 때 workflow가 실행
+  workflow_dispatch: # 이 옵션을 통해 workflow를 수동으로 실행
 
-  workflow_dispatch:
+permissions: # 권한 설정
+  contents: read # repo를 read하는 권한
+  pages: write # GitHub page에 write하는 권한
+  id-token: write # ID 토큰을 write하는 권한
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+concurrency: # 'concurrency'
+  group: ${{ github.workflow }}-${{ github.ref }} # 같은 workflow와 ref를 그룹화
+  cancel-in-progress: true # 새 작업 시작 시 이전 작업 취소
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+jobs: # workflow에서 수행할 작업
+  build: # 'build'
+    runs-on: ubuntu-latest # 실행 환경
+    steps: # 실행 단계
+      - name: Checkout repository # repo를 checkout하는 단계
+        uses: actions/checkout@v3 # actions/checkout 액션 사용
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node
-        uses: actions/setup-node@v3
+      - name: Set up Node # Node.js 설정
+        uses: actions/setup-node@v3 # actions/setup-node 액션 사용
         with:
-          node-version: 16.x
-          cache: 'npm'
+          node-version: 16.x # Node.js 버전
+          cache: 'npm' # NPM 사용
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
+      - name: Setup Pages # GitHub page 설정 단계
+        uses: actions/configure-pages@v3 # actions/configure-pages 액션 사용
 
-      - name: Restore cache
-        uses: actions/cache@v3
+      - name: Restore cache # 캐시 복원 단계
+        uses: actions/cache@v3 # actions/cache 액션 사용
         with:
           path: |
             **/node_modules
           key: ${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies # dependency 설치
+        run: npm ci # 'npm ci' 실행
 
-      - name: Build with vite
-        run: npm run build
+      - name: Build with vite # Vite로 빌드
+        run: npm run build # 'npm run build' 실행
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+      - name: Upload artifact # artifact 업로드 단계
+        uses: actions/upload-pages-artifact@v1 # actions/upload-pages-artifact 액션 사용
         with:
           path: ./dist
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
+  deploy: # 'deploy'
+    environment: # 배포 환경 설정.
+      name: github-pages # 이름
+      url: ${{ steps.deployment.outputs.page_url }} # 배포된 페이지 URL
+    runs-on: ubuntu-latest # 작업 환경
+    needs: build # 'build' 작업이 완료된 후 실행
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1.2.4
+      - name: Deploy to GitHub Pages # GitHub page로 배포하는 단계
+        id: deployment # ID 설정
+        uses: actions/deploy-pages@v1.2.4 # actions/deploy-pages 액션 사용
